@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Who Are You Between the Pages?</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #fceabb, #f8b500);
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: #fff;
+      padding: 2rem;
+      margin-top: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+      color: #444;
+    }
+    .question {
+      margin-bottom: 2rem;
+    }
+    label {
+      display: block;
+      margin: 0.5rem 0;
+      cursor: pointer;
+    }
+    button {
+      display: block;
+      margin: 2rem auto;
+      padding: 0.8rem 2rem;
+      background-color: #f8b500;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #d79500;
+    }
+    #result-page {
+      display: none;
+      text-align: center;
+    }
+    img.character-img {
+      max-width: 300px;
+      width: 100%;
+      margin: 1.5rem auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    #chart-container {
+      max-width: 600px;
+      margin: 2rem auto;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="quiz-page">
+  <h1>Who Are You Between the Pages?</h1>
+  <form id="quiz">
+    <div id="questions-container"></div>
+    <div id="tiebreaker-container" style="display: none;"></div>
+    <button type="submit" id="submit-btn">Find My Character</button>
+  </form>
+</div>
+
+<div class="container" id="result-page">
+  <h2 id="character-name"></h2>
+  <img id="character-img" class="character-img" src="" alt="Book Cover" onerror="this.src='https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=640&q=80';">
+  <p id="book-title"></p>
+  <p id="character-desc"></p>
+  <div id="chart-container">
+    <canvas id="personality-chart"></canvas>
+  </div>
+  <button onclick="location.reload()">Play Again</button>
+</div>
+
+<script>
+  const quiz = document.getElementById('quiz');
+  const resultPage = document.getElementById('result-page');
+  const quizPage = document.getElementById('quiz-page');
+  const questionsContainer = document.getElementById('questions-container');
+  const tiebreakerContainer = document.getElementById('tiebreaker-container');
+  const submitBtn = document.getElementById('submit-btn');
+  const characterImg = document.getElementById('character-img');
+
+  const characterData = {
+    amira: {
+      name: "Amira",
+      book: "Between Two Moons",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200708.png",
+      desc: "You are thoughtful and observant, navigating life with a deep sense of duty to family, faith, and community. Like Amira, you wrestle with your identity in complex environments, finding strength in reflection and connection. Your introspective nature allows you to balance personal values with external expectations, making you a steady presence for those around you."
+    },
+    asher: {
+      name: "Asher Lev",
+      book: "My Name Is Asher Lev",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200629.png",
+      desc: "Deeply creative and sensitive, you perceive the world through a unique, artistic lens. Like Asher, you grapple with balancing your individuality against societal expectations, often feeling torn but driven to express your inner truth. Your creativity is both your refuge and your voice, shaping how you connect with others and define yourself."
+    },
+    aryeh: {
+      name: "Aryeh Lev",
+      book: "My Name Is Asher Lev",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200629.png",
+      desc: "You are a natural leader, prioritizing duty and responsibility above all. Like Aryeh, you carry the weight of expectations with strength and determination, even when misunderstood. Your commitment to protecting and building for others defines you, making you a pillar of reliability in challenging times."
+    },
+    rivkeh: {
+      name: "Rivkeh Lev",
+      book: "My Name Is Asher Lev",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200629.png",
+      desc: "You possess immense emotional depth, often working quietly to support those around you. Like Rivkeh, you find strength in nurturing and caring, acting as the backbone for your loved ones. Your selfless dedication and quiet courage make you an indispensable source of comfort and stability."
+    },
+    laura: {
+      name: "Laura Freedman",
+      book: "When Mystical Creatures Attack!",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200647.png",
+      desc: "Empathetic and introspective, you guide others through chaos while confronting your own challenges. Like Laura, you find purpose in teaching and connecting, using your insight to help others grow. Your ability to find meaning in adversity makes you a beacon of hope and understanding for those you touch."
+    },
+    lina: {
+      name: "Lina",
+      book: "Between Two Moons",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200708.png",
+      desc: "Protective and loyal, you are the anchor in emotional storms, always ready to stand up for those you care about. Like Lina, you blend fierceness with compassion, offering both strength and comfort. Your unwavering dedication to your loved ones makes you a trusted and formidable presence in any crisis."
+    },
+    sami: {
+      name: "Sami",
+      book: "Between Two Moons",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200708.png",
+      desc: "You live with your heart on your sleeve, driven by passion and authenticity. Like Sami, your emotions fuel your actions, sometimes leading to impulsive choices but always reflecting your vibrant spirit. Your openness and zest for life inspire others to embrace their true selves."
+    },
+    janice: {
+      name: "Janice",
+      book: "When Mystical Creatures Attack!",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200647.png",
+      desc: "Imaginative and intelligent, you use storytelling to explore and shape the world around you. Like Janice, you find truth and meaning in fantasy, weaving narratives that challenge and inspire. Your creative mind and thoughtful nature make you a visionary who brings wonder to everyday life."
+    },
+    cody: {
+      name: "Cody",
+      book: "When Mystical Creatures Attack!",
+      img: "https://assets.onecompiler.app/43ef5q9s3/43exnqnzu/Screenshot%202025-04-15%20200647.png",
+      desc: "Fiery and emotional, you are driven by a deep sense of justice and a need to make a difference. Like Cody, you channel your intense feelings into action, using your voice to advocate for change. Your passion and conviction make you a powerful force for good, inspiring others to stand up for what matters."
+    }
+  };
+
+  const questions = [
+    {
+      text: "How do you handle conflict?",
+      options: {
+        amira: { text: "Observe quietly and seek understanding", weight: 3 },
+        asher: { text: "Express it through art or creativity", weight: 3 },
+        aryeh: { text: "Take charge and resolve it decisively", weight: 3 },
+        cody: { text: "Speak out passionately", weight: 3 }
+      }
+    },
+    {
+      text: "What value matters most to you?",
+      options: {
+        rivkeh: { text: "Supporting loved ones quietly", weight: 3 },
+        janice: { text: "Imagination and storytelling", weight: 3 },
+        laura: { text: "Helping others find their way", weight: 3 },
+        sami: { text: "Living with passion", weight: 3 }
+      }
+    },
+    {
+      text: "How do your friends describe you?",
+      options: {
+        amira: { text: "Thoughtful and dependable", weight: 3 },
+        lina: { text: "Loyal and protective", weight: 3 },
+        sami: { text: "Bold and emotional", weight: 3 },
+        janice: { text: "Imaginative and thoughtful", weight: 3 }
+      }
+    },
+    {
+      text: "Which role suits you best?",
+      options: {
+        laura: { text: "Teacher who guides through empathy", weight: 3 },
+        rivkeh: { text: "Supporter who keeps things together", weight: 3 },
+        lina: { text: "Guardian who stands strong", weight: 3 },
+        cody: { text: "Advocate who fights for justice", weight: 3 }
+      }
+    },
+    {
+      text: "What’s your greatest fear?",
+      options: {
+        amira: { text: "Losing connection to your faith", weight: 3 },
+        asher: { text: "Losing your unique voice", weight: 3 },
+        aryeh: { text: "Failing in your responsibilities", weight: 3 },
+        janice: { text: "A world without wonder", weight: 3 }
+      }
+    },
+    {
+      text: "How do you cope with pressure?",
+      options: {
+        lina: { text: "Stay steady and support others", weight: 3 },
+        aryeh: { text: "Lead with confidence", weight: 3 },
+        cody: { text: "Channel it into action", weight: 3 },
+        laura: { text: "Reflect and find meaning", weight: 3 }
+      }
+    },
+    {
+      text: "What brings you peace?",
+      options: {
+        amira: { text: "Moments of spiritual reflection", weight: 3 },
+        rivkeh: { text: "Quiet moments with loved ones", weight: 3 },
+        janice: { text: "Escaping into a story", weight: 3 },
+        asher: { text: "Creating something meaningful", weight: 3 }
+      }
+    },
+    {
+      text: "What motivates you?",
+      options: {
+        cody: { text: "Fighting for what’s right", weight: 3 },
+        sami: { text: "Following your heart", weight: 3 },
+        aryeh: { text: "Fulfilling your duty", weight: 3 },
+        laura: { text: "Inspiring others to grow", weight: 3 }
+      }
+    },
+    {
+      text: "Who do you protect most?",
+      options: {
+        amira: { text: "Your community and its values", weight: 3 },
+        lina: { text: "Your family and close friends", weight: 3 },
+        rivkeh: { text: "Those who rely on you", weight: 3 },
+        laura: { text: "Those you guide and teach", weight: 3 }
+      }
+    },
+    {
+      text: "What’s your ideal day like?",
+      options: {
+        amira: { text: "Balancing faith, family, and learning", weight: 3 },
+        asher: { text: "Painting or creating art", weight: 3 },
+        janice: { text: "Reading or writing stories", weight: 3 },
+        sami: { text: "Living in the moment", weight: 3 }
+      }
+    }
+  ];
+
+  const tiebreakerQuestion = {
+    text: "What inspires you most in life?",
+    options: {
+      amira: { text: "Deepening your faith and understanding", weight: 1 },
+      asher: { text: "Creating something unique", weight: 1 },
+      aryeh: { text: "Leading with purpose", weight: 1 },
+      rivkeh: { text: "Caring for others", weight: 1 },
+      laura: { text: "Guiding others through challenges", weight: 1 },
+      lina: { text: "Protecting those you love", weight: 1 },
+      sami: { text: "Following your emotions", weight: 1 },
+      janice: { text: "Imagining new worlds", weight: 1 },
+      cody: { text: "Fighting for justice", weight: 1 }
+    }
+  };
+
+  let isTiebreaker = false;
+
+  function renderQuestions() {
+    questions.forEach((q, index) => {
+      const div = document.createElement('div');
+      div.className = 'question';
+      div.innerHTML = `<label>${index + 1}. ${q.text}</label>` +
+        Object.entries(q.options).map(([key, value]) => 
+          `<label><input type="radio" name="q${index + 1}" value="${key}" required> ${value.text}</label>`
+        ).join('');
+      questionsContainer.appendChild(div);
+    });
+  }
+
+  function renderTiebreaker() {
+    tiebreakerContainer.innerHTML = `
+      <div class="question">
+        <label>Tiebreaker: ${tiebreakerQuestion.text}</label>
+        ${Object.entries(tiebreakerQuestion.options).map(([key, value]) => 
+          `<label><input type="radio" name="tiebreaker" value="${key}" required> ${value.text}</label>`
+        ).join('')}
+      </div>
+    `;
+    tiebreakerContainer.style.display = 'block';
+    submitBtn.textContent = 'Resolve Tiebreaker';
+    isTiebreaker = true;
+  }
+
+  function calculateScores(answers) {
+    const score = {};
+    Object.keys(characterData).forEach(char => score[char] = 0);
+
+    for (let [key, value] of answers.entries()) {
+      if (key.startsWith('q')) {
+        const questionIndex = parseInt(key.slice(1)) - 1;
+        const weight = questions[questionIndex].options[value].weight;
+        score[value] += weight;
+      } else if (key === 'tiebreaker') {
+        const weight = tiebreakerQuestion.options[value].weight;
+        score[value] += weight;
+      }
+    }
+
+    return score;
+  }
+
+  function getTopCharacter(score) {
+    const sorted = Object.entries(score).sort((a, b) => b[1] - a[1]);
+    const maxScore = sorted[0][1];
+    const topCharacters = sorted.filter(([_, s]) => s === maxScore).map(([char]) => char);
+    return topCharacters.length > 1 && !isTiebreaker ? null : sorted[0][0];
+  }
+
+  function renderChart(score) {
+    const totalScore = Object.values(score).reduce((sum, s) => sum + s, 0) || 1;
+    const percentages = Object.keys(score).map(char => ({
+      name: characterData[char].name,
+      percentage: ((score[char] / totalScore) * 100).toFixed(1)
+    }));
+
+    const ctx = document.getElementById('personality-chart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: percentages.map(p => p.name),
+        datasets: [{
+          label: 'Personality Alignment (%)',
+          data: percentages.map(p => p.percentage),
+          backgroundColor: '#f8b500',
+          borderColor: '#d79500',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: { display: true, text: 'Percentage' }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  renderQuestions();
+
+  quiz.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const answers = new FormData(quiz);
+    const score = calculateScores(answers);
+    const topCharacter = getTopCharacter(score);
+
+    if (!topCharacter && !isTiebreaker) {
+      renderTiebreaker();
+      return;
+    }
+
+    const c = characterData[topCharacter];
+    document.getElementById('character-name').innerText = `You are most like ${c.name}!`;
+    document.getElementById('book-title').innerText = `From: ${c.book}`;
+    document.getElementById('character-desc').innerText = c.desc;
+    characterImg.src = c.img;
+    characterImg.alt = `${c.book} Front Cover`;
+    characterImg.onload = () => console.log(`Image loaded successfully: ${c.img}`);
+    characterImg.onerror = () => {
+      console.error(`Failed to load image: ${c.img}`);
+      characterImg.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=640&q=80';
+      characterImg.alt = 'Fallback Book Cover';
+    };
+    renderChart(score);
+    quizPage.style.display = 'none';
+    resultPage.style.display = 'block';
+  });
+</script>
+
+</body>
+</html>
